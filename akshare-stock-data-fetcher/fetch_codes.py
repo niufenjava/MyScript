@@ -4,19 +4,22 @@ from datetime import datetime
 import time
 import os
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 def get_stock_codes():
     """获取股票代码并保存到文件"""
     current_date = datetime.now().strftime("%Y-%m-%d")
     stock_zh_a_spot_df = ak.stock_zh_a_spot()
-    code_column = stock_zh_a_spot_df['代码']
-    with open('stock_codes.txt', 'w', encoding='utf-8') as file:
+    # 过滤北交所股票（代码以 bj 开头）
+    code_column = [c for c in stock_zh_a_spot_df['代码'] if not str(c).startswith('bj')]
+    with open(os.path.join(SCRIPT_DIR, 'stock_codes.txt'), 'w', encoding='utf-8') as file:
         for code in code_column:
             file.write(str(code) + '\n')
         file.flush()
         os.fsync(file.fileno())
     print(f"今日:{current_date}股票代码保存成功")
 
-    with open('update_stock_codes_log.txt', 'a', encoding='utf-8') as log_file:
+    with open(os.path.join(SCRIPT_DIR, 'update_stock_codes_log.txt'), 'a', encoding='utf-8') as log_file:
         current_date = datetime.now().strftime("%Y-%m-%d")
         log_file.write(f"{current_date}: 更新股票代码成功，共{len(code_column)}条\n")
         log_file.flush()

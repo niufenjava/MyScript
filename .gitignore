@@ -15,6 +15,7 @@ env/
 .vscode/
 *.swp
 *.swo
+*.parquet
 
 # OS
 .DS_Store
