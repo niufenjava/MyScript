@@ -23,11 +23,12 @@ env/
 
 # Logs & output files
 *.log
-update_stock_codes_log.txt
-perfect.txt
-retry.txt
+screening_output/
 
-# Stock codes (auto-generated, optional to commit)
+# Data files (auto-generated)
+data/
+stockInfo.csv
+stock_codes.txt
 # stock_codes.txt
 
 # OS

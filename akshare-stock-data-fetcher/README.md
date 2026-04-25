@@ -1,114 +1,142 @@
-# akshare-stock-data-fetcher
+# A股数据采集工具集
 
-> A 股日线历史数据批量采集工具，基于腾讯证券原始接口，直连无需代理，支持多进程并行抓取、增量更新、Parquet 本地存储，开箱即用。
+基于 [akshare](https://github.com/akfamily/akshare) + 腾讯行情接口的 A 股数据采集、筛选、查询工具集。
 
----
-
-## ✨ Features
-
-- **日线历史数据**：批量抓取全市场 A 股日 K 线（前复权），多进程并行 + 超时自动重试
-- **腾讯证券接口**：直连不封 IP，无需代理，稳定高效
-- **Parquet 存储**：每只股票一个 `.parquet` 文件，按日期 upsert 去重，支持增量更新
-- **交易日判断**：自动跳过非交易日，无需手动维护日历
-- **股票代码同步**：一键更新沪深全量股票代码（自动过滤北交所）
-- **命令行查询**：内置查询工具，快速查看任意股票近 N 日行情
-
----
-
-## 📁 Project Structure
+## 项目结构
 
 ```
 akshare-stock-data-fetcher/
-├── stock_zh_a_hist_daily_em.py   # 批量抓取日线历史数据 → Parquet（多进程 + 重试）
-├── get_stock_code_every_day.py   # 同步沪深全量股票代码到 stock_codes.txt
-├── query_stock.py                # 命令行查询工具（查看近 N 日行情）
-├── test_daily.py                 # 测试脚本（接口连通性 + Parquet 读写验证）
-├── stock_codes.txt               # 沪深股票代码（运行后自动生成）
-├── data/daily/                   # Parquet 数据存储目录
-└── requirements.txt
+├── fetch_codes.py          # 同步沪深股票代码 → data/stock_codes.txt
+├── fetch_info.py           # 股票基本信息 + 市场数据 → data/stockInfo.csv
+├── fetch_finance.py        # 季度财报数据 → data/FinanceReport.csv
+├── fetch_daily_full.py     # 全量日线拉取 → data/daily/*.parquet
+├── fetch_daily_incr.py     # 每日增量日线（腾讯批量接口，~40s）
+├── screen_daily.py         # 日线指标筛选（CLI，6种策略）
+├── screen_strategy.py      # 策略选股（缩量+均线交叉）
+├── utils/                  # 工具/辅助脚本
+│   ├── merge_daily.py      # 合并日线大表 → data/all_daily.parquet
+│   ├── query_daily.py      # 单股日线查询
+│   └── test_daily.py       # 日线接口测试
+├── data/
+│   ├── daily/              # 单股日线 Parquet 文件
+│   ├── all_daily.parquet   # 合并日线大表
+│   ├── FinanceReport.csv   # 季度财报（单季度值）
+│   ├── FinanceReport_raw.csv # 季度财报（原始累计值）
+│   ├── stockInfo.csv       # 股票信息表（19列）
+│   └── stock_codes.txt     # 沪深股票代码列表（sh/sz前缀）
+├── requirements.txt
+└── LICENSE
 ```
 
----
-
-## 🚀 Quick Start
-
-### 1. 安装依赖
+## 安装依赖
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. 同步股票代码
+## 脚本说明
+
+### 数据采集类（fetch_*）
+
+| 脚本 | 功能 | 数据源 | 输出 |
+|------|------|--------|------|
+| `fetch_codes.py` | 同步沪深股票代码列表 | 腾讯行情 (akshare) | `data/stock_codes.txt` |
+| `fetch_info.py` | 股票基本信息 + 实时市场数据 | 巨潮资讯 + 腾讯行情 | `stockInfo.csv` |
+| `fetch_finance.py` | 季度财报数据（2020Q1起） | 东方财富 (akshare) | `data/FinanceReport.csv` |
+| `fetch_daily_full.py` | 全量历史日线（逐只拉取） | 腾讯K线接口 | `data/daily/*.parquet` |
+| `fetch_daily_incr.py` | 每日增量日线（批量拉取） | 腾讯批量行情 | `data/daily/*.parquet` + `data/all_daily.parquet` |
+
+### 查询与筛选类
+
+| 脚本 | 功能 | 用法示例 |
+|------|------|----------|
+| `utils/query_daily.py` | 查询单只股票近N日日线 | `python -m utils.query_daily 603659 20` |
+| `screen_daily.py` | 按指标快速筛选（6种策略） | `python screen_daily.py 缩量 3` |
+| `screen_strategy.py` | 策略选股（缩量+均线交叉，输出报告） | `python screen_strategy.py` |
+
+### 工具类（utils/ 目录）
+
+| 脚本 | 功能 | 用法示例 |
+|------|------|----------|
+| `utils/merge_daily.py` | 合并所有单股 Parquet 为 `all_daily.parquet` 大表 | `python -m utils.merge_daily` |
+| `utils/query_daily.py` | 查询单只股票近N日日线 | `python -m utils.query_daily 603659 20` |
+| `utils/test_daily.py` | 日线接口测试（开发用） | `python -m utils.test_daily` |
+
+## 典型使用流程
 
 ```bash
-python get_stock_code_every_day.py
+# 1. 同步股票代码列表
+python fetch_codes.py
+
+# 2. 拉取股票基本信息和市场数据
+python fetch_info.py
+
+# 3. 拉取季度财报数据
+python fetch_finance.py
+
+# 4. 首次全量拉取历史日线（耗时较长）
+python fetch_daily_full.py
+
+# 5. 之后每天运行增量更新（~40秒）
+python fetch_daily_incr.py
+
+# 6. 查询/筛选/工具
+python -m utils.query_daily 600519 20     # 查询茅台近20日
+python screen_daily.py 缩量 3             # 筛选连续3天缩量
+python screen_daily.py 连涨 5             # 筛选连续5天上涨
+python screen_daily.py 新高 20            # 筛选近20日创新高
+python -m utils.merge_daily               # 手动合并日线大表
 ```
 
-生成 `stock_codes.txt`，包含沪深全量股票代码（已过滤北交所）。
+## 数据格式
 
-### 3. 抓取日线历史数据
+### stockInfo.csv（股票信息表）
 
-```bash
-python stock_zh_a_hist_daily_em.py
+| 字段 | 说明 |
+|------|------|
+| A股代码 | 带 sh/sz 前缀（如 sh600519） |
+| A股简称 | 股票名称 |
+| H股代码 / H股简称 | H股信息（如有） |
+| 最新价 / 总市值(亿) | 实时市场数据 |
+| 每股收益 / 每股净资产 / 市净率 | 估值指标 |
+| 股息率(%) / 动态市盈率 / 静态市盈率 / 市盈率TTM | 估值指标 |
+| 成立日期 / 上市日期 | 公司基本信息 |
+| 所属市场 / 所属行业 / 入选指数 | 分类信息 |
+| 主营业务 | 业务描述 |
+
+### FinanceReport.csv（季度财报，单季度值）
+
+| 字段 | 说明 |
+|------|------|
+| 股票代码 / 股票名称 / 季度 | 基础标识 |
+| 营业总收入 / 净利润 | 利润表（单季度，单位：元） |
+| 营业总收入同比增长率 / 净利润同比增长率 | 增长指标（%） |
+| 净资产收益率 / 销售毛利率 / 销售净利率 | 盈利能力 |
+| 基本每股收益 / 每股净资产 / 每股经营现金流 | 每股指标 |
+| 资产负债率 | 偿债能力 |
+
+> 原始累计值保存在 `FinanceReport_raw.csv`，脚本自动将累计值转换为单季度值。
+
+### 日线数据（Parquet）
+
+| 字段 | 说明 |
+|------|------|
+| 日期 | 交易日期 |
+| 开盘 / 收盘 / 最高 / 最低 | OHLC 价格 |
+| 成交量 / 成交额 | 量价数据 |
+| 换手率 / 涨跌幅 | 交易指标 |
+
+## screen_daily.py 筛选策略
+
+```
+python screen_daily.py <策略> <参数>
 ```
 
-默认拉取 `stock_codes.txt` 中所有股票从 `2025-01-01` 至今的日线数据，8 进程并发，失败自动重试 6 次。
-
-### 4. 查询股票数据
-
-```bash
-# 查看 603659 近 20 个交易日（默认）
-python query_stock.py 603659
-
-# 查看 000001 近 50 个交易日
-python query_stock.py 000001 50
-```
-
----
-
-## ⚙️ Configuration
-
-配置项位于 `stock_zh_a_hist_daily_em.py` 顶部：
-
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `FULL_START_DATE` | `2025-01-01` | 全量拉取起始日期 |
-| `NUM_WORKERS` | `8` | 并行进程数 |
-| `MAX_TIMEOUT` | `30` | 单只股票最长处理时间（秒） |
-| `MAX_RETRIES` | `6` | 失败重试轮数 |
-| `REQUEST_INTERVAL` | `(0.3, 0.8)` | 每次请求随机间隔（秒） |
-
----
-
-## 🔧 数据字段
-
-每只股票的 Parquet 文件包含以下字段：
-
-| 字段 | 类型 | 说明 |
+| 策略 | 说明 | 示例 |
 |------|------|------|
-| 日期 | date | 交易日期 |
-| 开盘 | float | 开盘价（前复权） |
-| 收盘 | float | 收盘价（前复权） |
-| 最高 | float | 最高价（前复权） |
-| 最低 | float | 最低价（前复权） |
-| 成交量 | float | 成交量 |
-| 换手率 | float | 换手率 |
-| 成交额 | float | 成交额 |
-| 涨跌幅(%) | float | 涨跌幅百分比（自算） |
-
----
-
-## 📦 Dependencies
-
-- [akshare](https://github.com/akfamily/akshare) — 交易日历查询
-- [requests](https://docs.python-requests.org/) — 腾讯接口 HTTP 请求
-- [pandas](https://pandas.pydata.org/) — 数据处理
-- [pyarrow](https://arrow.apache.org/docs/python/) — Parquet 读写
-- [pebble](https://github.com/noxdafox/pebble) — 支持超时的进程池
-- [schedule](https://github.com/dbader/schedule) — 定时任务调度
-
----
-
-## 📄 License
-
-MIT License. See [LICENSE](LICENSE) for details.
+| 缩量 N | 近N天连续缩量 | `python screen_daily.py 缩量 3` |
+| 放量 N | 近N天连续放量 | `python screen_daily.py 放量 3` |
+| 连涨 N | 近N天连续上涨 | `python screen_daily.py 连涨 5` |
+| 连跌 N | 近N天连续下跌 | `python screen_daily.py 连跌 3` |
+| 新高 N | 近N日创新高 | `python screen_daily.py 新高 20` |
+| 地量 N | 近N日成交量最低 | `python screen_daily.py 地量 20` |

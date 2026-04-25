@@ -22,6 +22,9 @@ Yahoo Finance 数据查询工具。支持实时报价、基本面摘要、ASCII 
 ### china-stock-analysis
 基于价值投资理论的 A 股分析工具。提供股票筛选、财务深度分析、行业横向对比、估值计算（含安全边际）等模块。面向低频交易的普通投资者，免费使用。
 
+## qing-skills@technical-analysis
+安装 qing-skills@technical-analysis + 用你的 parquet 做单股技术分析
+
 ---
 
 ## 二、文档与数据处理

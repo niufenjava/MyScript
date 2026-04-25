@@ -325,7 +325,7 @@ def main():
 
     # 抓取完成后自动合并为大表（供跨股筛选使用）
     try:
-        from merge_daily import merge_all
+        from utils.merge_daily import merge_all
         merge_all()
     except Exception as e:
         print(f"合并大表失败: {e}")

@@ -12,18 +12,12 @@ def get_stock_codes():
     stock_zh_a_spot_df = ak.stock_zh_a_spot()
     # 过滤北交所股票（代码以 bj 开头）
     code_column = [c for c in stock_zh_a_spot_df['代码'] if not str(c).startswith('bj')]
-    with open(os.path.join(SCRIPT_DIR, 'stock_codes.txt'), 'w', encoding='utf-8') as file:
+    with open(os.path.join(SCRIPT_DIR, 'data' ,'stock_codes.txt'), 'w', encoding='utf-8') as file:
         for code in code_column:
             file.write(str(code) + '\n')
         file.flush()
         os.fsync(file.fileno())
-    print(f"今日:{current_date}股票代码保存成功")
-
-    with open(os.path.join(SCRIPT_DIR, 'update_stock_codes_log.txt'), 'a', encoding='utf-8') as log_file:
-        current_date = datetime.now().strftime("%Y-%m-%d")
-        log_file.write(f"{current_date}: 更新股票代码成功，共{len(code_column)}条\n")
-        log_file.flush()
-        os.fsync(log_file.fileno())
+    print(f"今日:{current_date}股票代码保存成功，共{len(code_column)}条")
 
 if __name__ == '__main__':
     get_stock_codes()

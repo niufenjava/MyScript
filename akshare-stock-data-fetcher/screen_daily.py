@@ -19,7 +19,7 @@ ALL_DAILY_PATH = os.path.join(SCRIPT_DIR, "data", "all_daily.parquet")
 def load_data():
     if not os.path.exists(ALL_DAILY_PATH):
         print(f"未找到合并大表: {ALL_DAILY_PATH}")
-        print("请先运行: python merge_daily.py")
+        print("请先运行: python -m utils.merge_daily")
         sys.exit(1)
     df = pd.read_parquet(ALL_DAILY_PATH)
     df["日期"] = pd.to_datetime(df["日期"])
