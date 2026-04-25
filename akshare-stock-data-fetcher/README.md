@@ -7,13 +7,14 @@
 ```
 akshare-stock-data-fetcher/
 ├── fetch_codes.py          # 同步沪深股票代码 → data/stock_codes.txt
-├── fetch_info.py           # 股票基本信息 + 市场数据 → data/stockInfo.csv
-├── fetch_finance.py        # 季度财报数据 → data/FinanceReport.csv
-├── fetch_daily_full.py     # 全量日线拉取 → data/daily/*.parquet
-├── fetch_daily_incr.py     # 每日增量日线（腾讯批量接口，~40s）
-├── screen_daily.py         # 日线指标筛选（CLI，6种策略）
-├── screen_strategy.py      # 策略选股（缩量+均线交叉）
-├── utils/                  # 工具/辅助脚本
+├── fetch_info.py            # 股票基本信息 + 市场数据 → data/stockInfo.csv
+├── fetch_finance.py         # 季度财报数据 → data/FinanceReport.csv
+├── fetch_events.py          # 异动事件采集（涨停/跌停/炸板/龙虎榜）→ data/events/stock_events.csv
+├── fetch_daily_full.py      # 全量日线拉取 → data/daily/*.parquet
+├── fetch_daily_incr.py      # 每日增量日线（腾讯批量接口，~40s）
+├── screen_daily.py          # 日线指标筛选（CLI，6种策略）
+├── screen_strategy.py       # 策略选股（缩量+均线交叉）
+├── utils/                   # 工具/辅助脚本
 │   ├── merge_daily.py      # 合并日线大表 → data/all_daily.parquet
 │   ├── query_daily.py      # 单股日线查询
 │   └── test_daily.py       # 日线接口测试
@@ -23,7 +24,9 @@ akshare-stock-data-fetcher/
 │   ├── FinanceReport.csv   # 季度财报（单季度值）
 │   ├── FinanceReport_raw.csv # 季度财报（原始累计值）
 │   ├── stockInfo.csv       # 股票信息表（19列）
-│   └── stock_codes.txt     # 沪深股票代码列表（sh/sz前缀）
+│   ├── stock_codes.txt     # 沪深股票代码列表（sh/sz前缀）
+│   └── events/             # 异动事件数据
+│       └── stock_events.csv # 异动事件记录（涨停/跌停/炸板/龙虎榜）
 ├── requirements.txt
 └── LICENSE
 ```

@@ -8,18 +8,22 @@ import os
 import csv
 import time
 import requests
-from concurrent.futures import ProcessPoolExecutor
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(SCRIPT_DIR, 'data', 'stockMarketData.csv')
 
 # 市场数据字段（腾讯）
 MARKET_FIELDS = ['A股代码', '最新价', '总市值(亿)', '每股收益', '每股净资产', '市净率',
-                 '股息率(%)', '动态市盈率', '静态市盈率', '市盈率TTM']
+                 '股息率(%)', '动态市盈率', '静态市盈率', '市盈率TTM', 'ROE']
 
 # 腾讯扩展行情字段索引
-# [3]最新价 [39]动态PE [44]总市值(亿) [46]PB [52]PE_TTM [53]静态PE
-# [56]股息率(%) [66]EPS [67]每股净资产
+# [3]最新价 [39]动态PE [44]总市值(亿) [46]PB
+# [52]PE_TTM [53]静态PE [56]股息率(%) [66]EPS [67]每股净资产
+# [68]ROE [72]总股本(股) [75]户均持股(万股)
+# 腾讯扩展行情字段索引
+# [3]最新价 [39]动态PE [44]总市值(亿) [46]PB
+# [52]PE_TTM [53]静态PE [56]股息率(%) [66]EPS [67]每股净资产
+# [68]ROE [75]户均持股(万股)
 TENCENT_FIELD_MAP = {
     '最新价': 3,
     '动态市盈率': 39,
@@ -30,9 +34,9 @@ TENCENT_FIELD_MAP = {
     '每股收益': 66,
     '每股净资产': 67,
     '股息率(%)': 56,
+    'ROE': 68,
 }
 
-# 非交易时段关键字段会返回的占位值
 INVALID_VALUES = {'', '-', 'N/A', 'None', None}
 
 
@@ -47,7 +51,7 @@ def is_valid_info(info):
 
 
 def load_stock_codes():
-    """从 stock_codes.txt 读取股票代码列表，保留 sh/sz 前缀"""
+    """从 stock_codes.txt 读取股票代码列表"""
     path = os.path.join(SCRIPT_DIR, 'data/stock_codes.txt')
     codes = []
     with open(path, 'r', encoding='utf-8') as f:
@@ -100,7 +104,7 @@ def fetch_market_batch(codes, batch_size=50):
                     except (IndexError, ValueError):
                         info[name] = ''
                 if not is_valid_info(info):
-                    continue  # 非交易时段数据，跳过
+                    continue
                 result[full_code] = info
         except Exception as e:
             print(f"  批次 {batch_start//batch_size+1} 请求失败: {e}")
@@ -114,10 +118,9 @@ def fetch_market_batch(codes, batch_size=50):
 
 
 def save_csv(codes, market_data):
-    """按 stock_codes.txt 顺序保存 CSV（lookup 时统一转换为 sh/sz 前缀）"""
+    """按 stock_codes.txt 顺序保存 CSV"""
     rows = []
     for code in codes:
-        # 保持 CSV 第一列显示原始代码，后面的字段从带前缀的 key 中查找
         lookup_key = code_to_tencent(code)
         info = market_data.get(lookup_key, {})
         row = {'A股代码': code}
