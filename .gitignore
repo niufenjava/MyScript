@@ -17,6 +17,9 @@ env/
 *.swo
 *.parquet
 
+# Node.js
+node_modules/
+
 # OS
 .DS_Store
 Thumbs.db
@@ -26,3 +29,4 @@ Thumbs.db
 
 # Qoder cache
 .qoder/
+
