@@ -1,31 +1,46 @@
 # Python
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+.Python
 *.egg-info/
-dist/
+.eggs/
 build/
+dist/
 
-# Virtual environment
+# Virtual environments
 .venv/
 venv/
 env/
+.env
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
-*.parquet
 
 # Node.js
 node_modules/
+
+# Logs & output files
+*.log
+screening_output/
+
+# Data files (auto-generated & large)
+data/
+*.parquet
+stockInfo.csv
+stock_codes.txt
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Data files (large)
-*.parquet
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
 
 # Qoder cache
 .qoder/
